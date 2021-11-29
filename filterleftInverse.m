@@ -73,11 +73,11 @@ function [F,mu,K,X,Y] = filterleftInverse(P1,P2,P3,Ds)
     K = []; X = []; Y = [];
     
     if nargin >= 4
-        % extract controller
+        % extract a controller
         X = ss(Af,Bf,Cf(1:Ds,:),Df(1:Ds,:),-1);
         Y = ss(Af,Bf,Cf(Ds+1:end,:),Df(Ds+1:end,:),-1);
 
-        % controller K = YX^(-1)
+        % state-space realization of K = YX^(-1)
         Ak = Af - Bf*X.D^(-1)*X.C;
         Bk = -Bf*X.D^(-1);
         Ck = -Y.C+Y.D*X.D^(-1)*X.C;

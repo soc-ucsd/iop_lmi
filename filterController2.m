@@ -9,6 +9,12 @@ function [K,X,Y,mu] = filterController2(Ml,Nl,eps,opts)
 %  
 % Output
 
+% used the new Hinf inequality in Theorem 2 from
+%        De Oliveira, M. C., Geromel, J. C., & Bernussou, J. (2002). 
+%          Extended H 2 and H norm characterizations and controller parametrizations 
+%          for discrete-time systems. International journal of control, 75(9), 666-679.
+
+
 if nargin < 4
     opts = 1; % performance
 end

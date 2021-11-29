@@ -9,6 +9,8 @@ function [K,X,Y,mu] = filterController(Ml,Nl,eps,opts)
 %  
 % Output
 
+% Used the standard Hinf LMI
+
 if nargin < 4
     opts = 1; % performance
 end
@@ -40,12 +42,6 @@ H.D2(size(Ml.B,2)+1:end,size(Ml.B,2)+1:end) = -eye(size(Nl.B,2));
 [p1,~]  = size(H.C1);        % p1 - output of H1
 [p2,~]  = size(H.C2);        % p2 - output of H2
  
-
-if opts == 1      % Hinf performance design
-    
-elseif opts == 0  % enforce stability only
-    
-end
 
 % Define variables
 X = sdpvar(n);           % symmetric variable - Lyapunov
@@ -123,7 +119,7 @@ Ak = Af - Bf*X.D^(-1)*X.C;
 Bk = -Bf*X.D^(-1);
 Ck = -Y.C+Y.D*X.D^(-1)*X.C;
 Dk = Y.D*X.D^(-1);
-K = ss(Ak,Bk,Ck,Dk,-1);
+K  = ss(Ak,Bk,Ck,Dk,-1);
 
 
 % alternative way
