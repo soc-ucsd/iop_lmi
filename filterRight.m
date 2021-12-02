@@ -12,7 +12,7 @@ function [Af,Bf,Cf,Df] = filterRight(A,B1,B2,C,D1,D2,mu,opts)
 
 % opts: 
 %    1 - standard Hinf inequality 
-%    2 - new Hinf inequality in Theorem 2
+%    2 - extended Hinf inequality in Theorem 2
 %        De Oliveira, M. C., Geromel, J. C., & Bernussou, J. (2002). 
 %          Extended H 2 and H norm characterizations and controller parametrizations 
 %          for discrete-time systems. International journal of control, 75(9), 666-679.
