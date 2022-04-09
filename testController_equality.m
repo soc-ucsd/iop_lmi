@@ -3,6 +3,7 @@
 % -------------------------------------------------------------------------
 
 clc
+addpath('utils')
 
 % dimension
 % dimension
@@ -10,7 +11,7 @@ n = 2;
 m = 1;
 p = 1;
 
-A = rand(n)*2;
+A = rand(n);
 B = rand(n,m);
 C = rand(p,n);
 D = rand(p,m);

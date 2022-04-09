@@ -92,7 +92,8 @@ C = Pr.C;  D1 = Pr.D1;  D2 = Pr.D2;
               (B1*R-B2)',      F',zeros(m2,n),zeros(m2,n),eye(m2),     R'*D1'-D2';
               zeros(p,n), zeros(p,n), C*X+D1*L, C*(X-N)+D1*L,   D1*R-D2,  eps*eye(p)];
 
-    constraint = [HinfLMI_right - epsilon*eye(4*n+m2+p)>=0];
+    %constraint = [HinfLMI_right - epsilon*eye(4*n+m2+p)>=0];
+    constraint = [HinfLMI_right >=0, [E, G; G', Hr]-epsilon*eye(2*n)>=0];
 
 if opts == 1 % Hinf performance
     % Hinf performance optimization
@@ -104,17 +105,36 @@ if opts == 1 % Hinf performance
                Q', Q',         Z'+(Y-M)-J',         Z'+Z-K, zeros(n,m),     L';
                (Y*B+F*D1)', ((Y-M)*B+F*D1)',zeros(m,n), zeros(m,n), eye(m), D1'*R'-D2';
                zeros(p2,n), zeros(p2,n),R*C1 - C2,    L,       R*D1-D2, mu*eye(p2)];
-    constraint = [constraint, HinfLMI_left - epsilon*eye(4*n+m+p2)>=0];   
+    %constraint = [constraint, HinfLMI_left - epsilon*eye(4*n+m+p2)>=0];   
     
+    
+    constraint = [constraint, HinfLMI_left >=0, [P, J; J', K]-epsilon*eye(2*n)>=0];
     % cost - feasibility
     cost = mu;
 end
 
-M = 1e4;
-constraint = [constraint, norm(Q,1) <= M,
-                          norm(F,1) <= M,
-                          norm(L,1) <= M,
-                          norm(R,1) <= M];
+%bigM = 1e6;
+bigM = 1e8;
+constraint = [constraint, norm([Q, F;L R],2) <= bigM];
+% constraint = [constraint, norm(Q,1) <= bigM,
+%                           norm(F,1) <= bigM,
+%                           norm(L,1) <= bigM,
+%                           norm(R,1) <= bigM];
+  
+
+constraint = [constraint, norm([X, X-N;Z Z],2) <= bigM];
+% constraint = [constraint, norm(E,1) <= bigM,
+%                           norm(Hr,1) <= bigM,
+%                           norm(X,1) <= bigM,
+%                           norm(Z,1) <= bigM,
+%                           norm(N,1) <= bigM,
+%                           norm(G,1) <= bigM,
+%                           norm(E,1) <= bigM,
+%                           norm(P,1) <= bigM,
+%                           norm(K,1) <= bigM,
+%                           norm(Y,1) <= bigM,
+%                           norm(J,1) <= bigM,
+%                           norm(M,1) <= bigM];
 
 % call mosek
 ops = sdpsettings('solver','mosek','verbose',1);

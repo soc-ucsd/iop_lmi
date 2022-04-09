@@ -53,6 +53,8 @@ function [F,mu,K,X,Y] = filterleftInverse(P1,P2,P3,Ds)
     
     constraint = [constraint, Hinf-epsilon*eye(4*n+size(C2,1)+size(D1,2)) >=0];
 
+    
+    
     % cost - feasibility
     cost = mu; 
 

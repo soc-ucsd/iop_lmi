@@ -1,12 +1,19 @@
-% ----------------------------------------------
+% -------------------------------------------------------
+%
 %    Test Controller design via joint filtering
-% ----------------------------------------------
+%
+% -------------------------------------------------------
 
 
 
 clc
 
+% ----------------------------------
+%       Generate ramdon data
+% ----------------------------------
+
 % dimension
+
 n = 2;
 m = 1;
 p = 1;
@@ -14,7 +21,7 @@ p = 1;
 A = rand(n)*2;
 B = rand(n,m);
 C = rand(p,n);
-D = rand(p,m);
+D = zeros(p,m);
 
 
 % Step 1: Left co-prime factorization
@@ -36,12 +43,16 @@ Nr = ss(A - B*K, B,C-D*K, D,-1);
 % opts = 1 - joint filtering for performance
 % opts = 0 - only find a stabilizing controller
 
-eps = (0.5)^2;
+% -------------------------------------------------------
+%             Stabilization only 
+% -------------------------------------------------------
+
+eps = (0.3)^2;
 opts = 0; 
-[K,X,Y,mu] = filterController(Ml,Nl,eps,opts);
+[K,X,Y,mu]     = filterController(Ml,Nl,eps,opts);
 [K2,X2,Y2,mu2] = filterController2(Ml,Nl,eps,opts);
 
-%minreal(Y*X^(-1)- K)
+% minreal(Y*X^(-1)- K)
 
 G = ss(A,B,C,D,-1);
 H = feedback(G,-K);
@@ -59,10 +70,12 @@ fprintf('Hinf norm - Performance: %6.2f \n', hinfnorm([X2;Y2]*[Ml, Nl] + blkdiag
 
 
 fprintf('Paused: type any key to continue \n\n ')
-pause 
-% optimize performance
+
+% -------------------------------------------------------
+%             optimize performance
+% -------------------------------------------------------
 opts = 1; 
-[K,X,Y,mu] = filterController(Ml,Nl,eps,opts);
+[K,X,Y,mu]     = filterController(Ml,Nl,eps,opts);
 [K2,X2,Y2,mu2] = filterController2(Ml,Nl,eps,opts);
 
 H = feedback(G,-K);

@@ -5,14 +5,15 @@ function [K,X,Y,mu] = filterController(Ml,Nl,eps,opts)
 %                     [Ml Nl] = [A | Bm Bn]
 %                               [---------]
 %                               [C | Dm Dn]
-%       eps < 1 - enforce stability 
-%  
+%       eps <= 1 : enforce stability 
+%       opts    0: stablization only 
+%               1: Hinf performance
 % Output
 
 % Used the standard Hinf LMI
 
 if nargin < 4
-    opts = 1; % performance
+    opts = 0; % stabilization or performance
 end
 
 n = size(Ml.A,1);
@@ -48,7 +49,7 @@ X = sdpvar(n);           % symmetric variable - Lyapunov
 Z = sdpvar(n);           % symmetric variable - Lyapunov 
 
 Y = sdpvar(n);           % symmetric variable - Lyapunov
-%S = sdpvar(n);          % symmetric variable - Lyapunov 
+S = sdpvar(n);          % symmetric variable - Lyapunov 
 
 % Filter realization
 Q = sdpvar(n,n,'full');
@@ -65,37 +66,41 @@ epsilon = 1e-5;
 A = P.A;  B1 = P.B1;  B2 = P.B2;
 C = P.C;  D1 = P.D1;  D2 = P.D2;
 HinfLMI_right = [X,           Z, A*X+B1*L, A*Z+B1*L, B1*R-B2,      zeros(n,p);
-           Z,           Z, Q,         Q,        F,           zeros(n,p);
-           (A*X+B1*L)', Q',X,         Z,    zeros(n,m2),     X*C'+L'*D1';
-           (A*Z+B1*L)', Q',Z,         Z,    zeros(n,m2),     Z*C'+L'*D1';
-           (B1*R-B2)',  F',zeros(m2,n),zeros(m2,n),eye(m2),  R'*D1'-D2';
-           zeros(p,n), zeros(p,n),C*X+D1*L,C*Z+D1*L,D1*R-D2, eps*eye(p)];
+                 Z,           Z, Q,         Q,        F,           zeros(n,p);
+                (A*X+B1*L)', Q',X,         Z,    zeros(n,m2),     X*C'+L'*D1';
+                (A*Z+B1*L)', Q',Z,         Z,    zeros(n,m2),     Z*C'+L'*D1';
+                (B1*R-B2)',  F',zeros(m2,n),zeros(m2,n),eye(m2),  R'*D1'-D2';
+                 zeros(p,n), zeros(p,n),C*X+D1*L,C*Z+D1*L,D1*R-D2, eps*eye(p)];
    
-constraint = [HinfLMI_right - epsilon*eye(4*n+m2+p)>=0];
+%constraint = [HinfLMI_right - epsilon*eye(4*n+m2+p)>=0];
+constraint = [HinfLMI_right >=0, X - Z >= epsilon*eye(n)];
 
 if opts == 1 % Hinf performance
     % Hinf performance optimization
     A = H.A; C1 = H.C1;  C2 = H.C2;
     B = H.B; D1 = H.D1;  D2 = H.D2;
-    HinfLMI_left = [Y,           Z,          Y*A+F*C1,     Q, Y*B+F*D1,    zeros(n,p2);
-               Z,           Z,          Z*A+F*C1,     Q, Z*B+F*D1,    zeros(n,p2);
-               (Y*A+F*C1)', (Z*A+F*C1)',Y,            Z, zeros(n,m),  C1'*R'-C2';
-               Q', Q',                  Z,            Z, zeros(n,m),     L';
-               (Y*B+F*D1)', (Z*B+F*D1)',zeros(m,n), zeros(m,n), eye(m), D1'*R'-D2';
-               zeros(p2,n), zeros(p2,n),R*C1 - C2,    L,       R*D1-D2, mu*eye(p2)];
+    HinfLMI_left = [Y,           S,          Y*A+F*C1,     Q, Y*B+F*D1,    zeros(n,p2);
+                    S,           S,          S*A+F*C1,     Q, S*B+F*D1,    zeros(n,p2);
+                   (Y*A+F*C1)', (S*A+F*C1)',Y,            S, zeros(n,m),  C1'*R'-C2';
+                    Q', Q',                  S,            S, zeros(n,m),     L';
+                   (Y*B+F*D1)', (S*B+F*D1)',zeros(m,n), zeros(m,n), eye(m), D1'*R'-D2';
+                    zeros(p2,n), zeros(p2,n),R*C1 - C2,    L,       R*D1-D2, mu*eye(p2)];
 
-    constraint = [constraint, HinfLMI_left - epsilon*eye(4*n+m+p2)>=0];
+    %constraint = [constraint, HinfLMI_left - epsilon*bikdiag(eye(4*n),zeros(m+p2))>=0];
+    constraint = [constraint, HinfLMI_left >=0, Y - S >= epsilon*eye(n)];
     
     % cost - feasibility
-    cost = mu;
+    cost = mu;% + norm(Z-S,'fro')^2;
 end
 
-M = 1e4;
-constraint = [constraint, norm(Q,1) <= M,
-                          norm(F,1) <= M,
-                          norm(L,1) <= M,
-                          norm(R,1) <= M];
-
+bigM = 1e8;
+constraint = [constraint, norm([Q, F;L R],2) <= bigM];
+%                           norm(F,1) <= bigM,
+%                           norm(L,1) <= bigM,
+%                           norm(R,1) <= bigM];
+                    
+constraint = [constraint, norm(X,2) <= bigM,
+                          norm(Y,2) <= bigM];
 % call mosek
 ops = sdpsettings('solver','mosek','verbose',1);
 optimize(constraint,cost,ops);
